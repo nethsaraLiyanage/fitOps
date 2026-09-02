@@ -1,0 +1,17 @@
+node_modules
+server
+dist
+dist-ssr
+.git
+.gitignore
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+bun.lockb
+bun.lock
+Dockerfile
+docker-compose.yml
+.vscode
+.idea
+*.log
