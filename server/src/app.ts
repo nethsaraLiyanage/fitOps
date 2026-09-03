@@ -1,7 +1,8 @@
 import cors from "cors";
 import express from "express";
-import rateLimit from "express-rate-limit";
-import helmet from "helmet";
+import type { RequestHandler } from "express";
+import { rateLimit } from "express-rate-limit";
+import * as helmetModule from "helmet";
 import morgan from "morgan";
 import { env } from "./config/env.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
@@ -16,6 +17,19 @@ import { inventoryRouter } from "./routes/inventory.routes.js";
 import { membersRouter } from "./routes/members.routes.js";
 import { reportsRouter } from "./routes/reports.routes.js";
 import { settingsRouter } from "./routes/settings.routes.js";
+
+/**
+ * helmet and express-rate-limit ship dual CJS/ESM builds. Which of their
+ * declaration files the compiler resolves decides whether the callable is the
+ * module's default export or the namespace object itself — and that differs
+ * between this repo and the Vercel build, where the CJS declarations win and a
+ * default import types as the (uncallable) namespace.
+ *
+ * express-rate-limit exposes `rateLimit` as a real named export in every build,
+ * so a named import is unambiguous. helmet's aggregate has no named alias, so
+ * normalise it once here instead of depending on how the default resolves.
+ */
+const helmet = ((helmetModule as Record<string, unknown>).default ?? helmetModule) as () => RequestHandler;
 
 /**
  * Brute-force guard on login, the only unauthenticated endpoint. Built per app so
