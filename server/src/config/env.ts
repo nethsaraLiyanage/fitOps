@@ -8,6 +8,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   CORS_ORIGIN: z.string().default("http://localhost:8080"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  /** Login attempts allowed per IP per 15 minutes. */
+  LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(10),
 });
 
 const parsed = envSchema.safeParse(process.env);

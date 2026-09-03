@@ -13,6 +13,7 @@ import {
   TrainingClass,
   User,
 } from "../models/index.js";
+import { buildSeedAttendance } from "./data/attendance.js";
 import { seedClasses, seedSessions } from "./data/classes.js";
 import { seedEquipment } from "./data/equipment.js";
 import { seedGymProfile } from "./data/gymProfile.js";
@@ -79,23 +80,29 @@ async function seed() {
   await GymProfile.findByIdAndUpdate("singleton", seedGymProfile, { upsert: true });
 
   console.log("Seeding attendance + activity log...");
-  const now = new Date();
-  await AttendanceRecord.insertMany(
-    members.slice(0, 5).map((member, i) => {
-      const checkIn = new Date(now);
-      checkIn.setDate(checkIn.getDate() - i);
-      checkIn.setHours(7 + i, 0, 0, 0);
-      return { memberId: member._id, checkIn, checkOut: null };
-    }),
-  );
+  const attendance = buildSeedAttendance(members.map((member) => member._id));
+  await AttendanceRecord.insertMany(attendance);
 
-  await ActivityLog.insertMany([
-    { type: "member.joined", text: `${members[0].name} joined as a new member` },
-    { type: "equipment.maintenance_logged", text: "Treadmill #3 marked for maintenance" },
-    { type: "inventory.restocked", text: "Protein powder restocked (+50 units)" },
-    { type: "inventory.low_stock", text: "Yoga mats stock critically low" },
-    { type: "attendance.checked_in", text: "5 members checked in today" },
-  ]);
+  // Worded exactly like logActivity() writes them, so the seeded history is
+  // indistinguishable from entries the running app produces.
+  const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000);
+  const lowStockItem = seedInventory.find((item) => item.stock < item.minStock) ?? seedInventory[0];
+
+  // Inserted through the driver so the staggered createdAt values survive Mongoose's timestamps.
+  await ActivityLog.collection.insertMany(
+    [
+      { type: "member.joined", text: `${members[members.length - 1].name} joined as a new member`, minutes: 240 },
+      { type: "equipment.status_changed", text: `${seedEquipment[0].name} marked maintenance`, minutes: 180 },
+      { type: "inventory.restocked", text: `${seedInventory[0].name} restocked (+50 units)`, minutes: 120 },
+      { type: "inventory.low_stock", text: `${lowStockItem.name} stock running low (${lowStockItem.stock} left)`, minutes: 60 },
+      { type: "attendance.checked_in", text: `${members[0].name} checked in`, minutes: 25 },
+    ].map(({ minutes, ...entry }) => ({
+      ...entry,
+      actorId: null,
+      createdAt: minutesAgo(minutes),
+      updatedAt: minutesAgo(minutes),
+    })),
+  );
 
   console.log("Seed complete.");
   await disconnectDb();

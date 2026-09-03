@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { actorId } from "../utils/actor.js";
 import * as inventoryService from "../services/inventory.service.js";
 import { CreateInventoryItemInput, StockAdjustmentInput } from "../schemas/inventory.schema.js";
 
@@ -13,6 +14,6 @@ export const createInventoryItemHandler = asyncHandler(async (req: Request, res:
 });
 
 export const adjustStockHandler = asyncHandler(async (req: Request, res: Response) => {
-  const updated = await inventoryService.adjustStock(req.params.id, req.body as StockAdjustmentInput);
+  const updated = await inventoryService.adjustStock(req.params.id, req.body as StockAdjustmentInput, actorId(req));
   res.json(updated);
 });

@@ -2,6 +2,7 @@ import { ClassSession, TrainingClass } from "../models/index.js";
 import { ApiError } from "../utils/ApiError.js";
 import { CreateClassInput } from "../schemas/class.schema.js";
 import { DAYS } from "../models/TrainingClass.js";
+import { logActivity } from "./activity.service.js";
 
 const toClientClass = (doc: any) => ({
   id: String(doc._id),
@@ -51,7 +52,7 @@ export async function listSessions() {
   return sessions.map(toClientSession);
 }
 
-export async function createClass(input: CreateClassInput) {
+export async function createClass(input: CreateClassInput, actorId?: string) {
   const sameDay = await TrainingClass.find({ day: input.day });
   const conflict = sameDay.find(
     (c) =>
@@ -79,10 +80,16 @@ export async function createClass(input: CreateClassInput) {
     });
   }
 
+  await logActivity(
+    "classes.class_scheduled",
+    `${created.title} (${created.discipline}) scheduled on ${created.day} at ${created.startTime}`,
+    actorId,
+  );
+
   return toClientClass(created);
 }
 
-export async function completeSession(id: string) {
+export async function completeSession(id: string, actorId?: string) {
   const session = await ClassSession.findById(id);
   if (!session) throw ApiError.notFound("Session not found");
 
@@ -90,6 +97,7 @@ export async function completeSession(id: string) {
   session.attended = session.attended || Math.round(session.capacity * 0.8);
   session.rounds = session.rounds || 10;
   await session.save();
+  await logActivity("classes.session_completed", `${session.title} session completed (${session.attended} attended)`, actorId);
 
   return toClientSession(session);
 }

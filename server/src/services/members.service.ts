@@ -3,6 +3,7 @@ import { Member } from "../models/index.js";
 import { ApiError } from "../utils/ApiError.js";
 import { CreateMemberInput, UpdatePaymentInput } from "../schemas/member.schema.js";
 import { PLAN_FEES, currentPeriod, feeFor, todayISO } from "./planFees.service.js";
+import { logActivity } from "./activity.service.js";
 
 const toClientMember = (doc: any) => ({
   id: String(doc._id),
@@ -40,7 +41,7 @@ export async function listMembers(search?: string) {
   return members.map(toClientMember);
 }
 
-export async function createMember(input: CreateMemberInput) {
+export async function createMember(input: CreateMemberInput, actorId?: string) {
   const seq = await nextSequence("member");
   const membershipId = `GYM-${String(seq).padStart(4, "0")}`;
 
@@ -53,6 +54,7 @@ export async function createMember(input: CreateMemberInput) {
   };
 
   const member = await Member.create({ ...input, membershipId, payments: [firstPayment] });
+  await logActivity("member.joined", `${member.name} joined as a new member`, actorId);
   return toClientMember(member);
 }
 
@@ -61,7 +63,7 @@ export async function createMember(input: CreateMemberInput) {
  * three-month history) gets one created on the fly. Changing the status drops
  * the verification, so an edited payment has to be verified again.
  */
-export async function updatePayment(memberId: string, period: string, patch: UpdatePaymentInput) {
+export async function updatePayment(memberId: string, period: string, patch: UpdatePaymentInput, actorId?: string) {
   const member = await Member.findById(memberId);
   if (!member) throw ApiError.notFound("Member not found");
 
@@ -88,6 +90,12 @@ export async function updatePayment(memberId: string, period: string, patch: Upd
   }
 
   await member.save();
+
+  const detail = updated.verified !== base.verified && updated.status === base.status
+    ? `${updated.verified ? "verified" : "unverified"}`
+    : `marked ${updated.status}`;
+  await logActivity("payment.updated", `${member.name}'s ${period} payment ${detail}`, actorId);
+
   return toClientMember(member);
 }
 

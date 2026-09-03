@@ -1,6 +1,7 @@
 import { InventoryItem } from "../models/index.js";
 import { ApiError } from "../utils/ApiError.js";
 import { CreateInventoryItemInput, StockAdjustmentInput } from "../schemas/inventory.schema.js";
+import { logActivity } from "./activity.service.js";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -33,7 +34,7 @@ export async function createInventoryItem(input: CreateInventoryItemInput) {
   return toClientItem(created);
 }
 
-export async function adjustStock(id: string, input: StockAdjustmentInput) {
+export async function adjustStock(id: string, input: StockAdjustmentInput, actorId?: string) {
   const item = await InventoryItem.findById(id);
   if (!item) throw ApiError.notFound("Inventory item not found");
 
@@ -44,5 +45,21 @@ export async function adjustStock(id: string, input: StockAdjustmentInput) {
   item.stock += input.direction === "add" ? input.quantity : -input.quantity;
   item.movements.push({ date: todayISO(), direction: input.direction, quantity: input.quantity, note: input.note ?? null });
   await item.save();
-  return toClientItem(item);
+
+  const updated = toClientItem(item);
+
+  if (input.direction === "add") {
+    await logActivity("inventory.restocked", `${item.name} restocked (+${input.quantity} units)`, actorId);
+  }
+
+  // A removal that pushes an item under its threshold is the entry worth surfacing.
+  if (updated.status !== "active") {
+    await logActivity(
+      "inventory.low_stock",
+      `${item.name} stock ${updated.status === "critical" ? "critically low" : "running low"} (${item.stock} left)`,
+      actorId,
+    );
+  }
+
+  return updated;
 }

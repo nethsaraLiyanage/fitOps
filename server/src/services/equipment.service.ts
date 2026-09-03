@@ -1,6 +1,7 @@
 import { Equipment } from "../models/index.js";
 import { ApiError } from "../utils/ApiError.js";
 import { AddMaintenanceLogInput, CreateEquipmentInput, UpdateEquipmentStatusInput } from "../schemas/equipment.schema.js";
+import { logActivity } from "./activity.service.js";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -29,16 +30,18 @@ export async function createEquipment(input: CreateEquipmentInput) {
   return toClientEquipment(created);
 }
 
-export async function updateStatus(id: string, input: UpdateEquipmentStatusInput) {
+export async function updateStatus(id: string, input: UpdateEquipmentStatusInput, actorId?: string) {
   const equipment = await Equipment.findById(id);
   if (!equipment) throw ApiError.notFound("Equipment not found");
 
   equipment.status = input.status;
   await equipment.save();
+  await logActivity("equipment.status_changed", `${equipment.name} marked ${input.status}`, actorId);
+
   return toClientEquipment(equipment);
 }
 
-export async function addMaintenanceLog(id: string, input: AddMaintenanceLogInput) {
+export async function addMaintenanceLog(id: string, input: AddMaintenanceLogInput, actorId?: string) {
   const equipment = await Equipment.findById(id);
   if (!equipment) throw ApiError.notFound("Equipment not found");
 
@@ -47,5 +50,7 @@ export async function addMaintenanceLog(id: string, input: AddMaintenanceLogInpu
   equipment.technician = input.technician;
   equipment.lastMaintenance = date;
   await equipment.save();
+  await logActivity("equipment.maintenance_logged", `${equipment.name} assigned to ${input.technician}`, actorId);
+
   return toClientEquipment(equipment);
 }
