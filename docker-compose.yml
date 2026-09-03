@@ -29,6 +29,10 @@ services:
       PORT: 4000
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       NODE_ENV: production
+      LOGIN_RATE_LIMIT: ${LOGIN_RATE_LIMIT:-10}
+      # Attendance "today" and every date-bucketed report use the process timezone.
+      # Without this the container runs on UTC and those views shift by a day.
+      TZ: ${TZ:-Asia/Colombo}
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@fitops.lk}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin123}
       SEED_STAFF_EMAIL: ${SEED_STAFF_EMAIL:-staff@fitops.lk}

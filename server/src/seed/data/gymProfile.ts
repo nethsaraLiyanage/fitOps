@@ -1,8 +1,4 @@
-/** Ported from the frontend's Settings.tsx default form values. */
-export const seedGymProfile = {
-  name: "FitZone Gym",
-  phone: "+1 555-0100",
-  address: "123 Fitness Avenue, Los Angeles, CA",
-  hours: "5:00 AM - 10:00 PM",
-  maxCapacity: 150,
-};
+import { DEFAULT_GYM_PROFILE } from "../../services/settings.service.js";
+
+/** One source of truth: the settings service owns the defaults, the seed just plants them. */
+export const seedGymProfile = DEFAULT_GYM_PROFILE;

@@ -7,6 +7,17 @@ export function useMembersQuery() {
   return useQuery({ queryKey: ["members"], queryFn: () => fetchMembers() });
 }
 
+/** Server-side member lookup for search-as-you-type UIs. Idle until the caller has a term. */
+export function useMemberSearchQuery(search: string) {
+  const term = search.trim();
+
+  return useQuery({
+    queryKey: ["members", "search", term],
+    queryFn: () => fetchMembers(term),
+    enabled: term.length > 0,
+  });
+}
+
 export function usePlanFeesQuery() {
   return useQuery({ queryKey: ["members", "plan-fees"], queryFn: fetchPlanFees, staleTime: Infinity });
 }

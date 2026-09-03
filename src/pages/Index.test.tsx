@@ -20,6 +20,26 @@ vi.mock("@/components/members/members-api", () => ({
   }),
 }));
 
+vi.mock("@/components/activity/activity-api", () => ({
+  fetchActivity: vi.fn(async () => [
+    { id: "a1", type: "member.joined", text: "Rachel Green joined as a new member", createdAt: new Date(Date.now() - 5 * 60_000).toISOString() },
+    { id: "a2", type: "inventory.low_stock", text: "Yoga Mats stock running low (8 left)", createdAt: new Date(Date.now() - 3 * 3_600_000).toISOString() },
+  ]),
+}));
+
+vi.mock("@/components/reports/reports-api", () => ({
+  fetchReportsSummary: vi.fn(async () => ({
+    memberTrend: [
+      { month: "Aug", new: 1, total: 7 },
+      { month: "Sep", new: 2, total: 9 },
+    ],
+    attendanceTrend: [{ week: "W1", avg: 12 }],
+    attendanceByWeekday: [{ day: "Mon", checkins: 14 }],
+    equipmentByCategory: [{ name: "Cardio", value: 3 }],
+  })),
+  downloadReport: vi.fn(),
+}));
+
 vi.mock("@/components/classes/classes-api", () => ({
   fetchClasses: vi.fn(async () => initialClasses),
   fetchSessions: vi.fn(async () => initialSessions),
@@ -69,6 +89,43 @@ describe("Dashboard Classes card", () => {
     fireEvent.click(within(await classesCard()).getByRole("button", { name: /schedule/i }));
 
     expect(screen.getByText("Classes page")).toBeInTheDocument();
+  });
+});
+
+describe("Dashboard membership KPIs", () => {
+  const kpiCard = async (title: string) =>
+    within((await screen.findByText(title, { selector: "p" })).closest("div.kpi-card") as HTMLElement);
+
+  it("counts the real roster rather than a hardcoded figure", async () => {
+    renderApp();
+    const kpi = await kpiCard("Total Members");
+
+    expect(kpi.getByText(String(initialMembers.length))).toBeInTheDocument();
+    expect(kpi.getByText("+2 joined this month")).toBeInTheDocument();
+  });
+
+  it("derives the active rate from member status", async () => {
+    renderApp();
+    const active = initialMembers.filter((m) => m.status === "active").length;
+    const kpi = await kpiCard("Active Members");
+
+    expect(kpi.getByText(String(active))).toBeInTheDocument();
+    expect(kpi.getByText(`${Math.round((active / initialMembers.length) * 100)}% active rate`)).toBeInTheDocument();
+  });
+});
+
+describe("Dashboard activity feed", () => {
+  const feed = async () =>
+    within((await screen.findByText("Recent Activity", { selector: "h3" })).closest("div.glass-card") as HTMLElement);
+
+  it("renders server-recorded entries with a relative timestamp", async () => {
+    renderApp();
+    const panel = await feed();
+
+    expect(panel.getByText("Rachel Green joined as a new member")).toBeInTheDocument();
+    expect(panel.getByText("5 min ago")).toBeInTheDocument();
+    expect(panel.getByText("Yoga Mats stock running low (8 left)")).toBeInTheDocument();
+    expect(panel.getByText("3 hours ago")).toBeInTheDocument();
   });
 });
 

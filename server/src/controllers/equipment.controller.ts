@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { actorId } from "../utils/actor.js";
 import * as equipmentService from "../services/equipment.service.js";
 import { AddMaintenanceLogInput, CreateEquipmentInput, UpdateEquipmentStatusInput } from "../schemas/equipment.schema.js";
 
@@ -13,11 +14,11 @@ export const createEquipmentHandler = asyncHandler(async (req: Request, res: Res
 });
 
 export const updateStatusHandler = asyncHandler(async (req: Request, res: Response) => {
-  const updated = await equipmentService.updateStatus(req.params.id, req.body as UpdateEquipmentStatusInput);
+  const updated = await equipmentService.updateStatus(req.params.id, req.body as UpdateEquipmentStatusInput, actorId(req));
   res.json(updated);
 });
 
 export const addMaintenanceLogHandler = asyncHandler(async (req: Request, res: Response) => {
-  const updated = await equipmentService.addMaintenanceLog(req.params.id, req.body as AddMaintenanceLogInput);
+  const updated = await equipmentService.addMaintenanceLog(req.params.id, req.body as AddMaintenanceLogInput, actorId(req));
   res.json(updated);
 });
