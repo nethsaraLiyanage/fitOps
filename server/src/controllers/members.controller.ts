@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { actorId } from "../utils/actor.js";
 import * as membersService from "../services/members.service.js";
-import { CreateMemberInput, UpdatePaymentInput } from "../schemas/member.schema.js";
+import { CreateMemberInput, UpdateBiometricIdInput, UpdatePaymentInput } from "../schemas/member.schema.js";
 
 export const listMembersHandler = asyncHandler(async (req: Request, res: Response) => {
   const search = typeof req.query.search === "string" ? req.query.search : undefined;
@@ -19,6 +19,10 @@ export const updatePaymentHandler = asyncHandler(async (req: Request, res: Respo
   const { id, period } = req.params;
   const member = await membersService.updatePayment(id, period, req.body as UpdatePaymentInput, actorId(req));
   res.json(member);
+});
+
+export const updateBiometricIdHandler = asyncHandler(async (req: Request, res: Response) => {
+  res.json(await membersService.setBiometricId(req.params.id, req.body as UpdateBiometricIdInput));
 });
 
 export const planFeesHandler = asyncHandler(async (_req: Request, res: Response) => {

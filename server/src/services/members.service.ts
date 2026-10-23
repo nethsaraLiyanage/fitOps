@@ -1,7 +1,8 @@
+import { isValidObjectId } from "mongoose";
 import { nextSequence } from "../models/Counter.js";
 import { Member } from "../models/index.js";
 import { ApiError } from "../utils/ApiError.js";
-import { CreateMemberInput, UpdatePaymentInput } from "../schemas/member.schema.js";
+import { CreateMemberInput, UpdateBiometricIdInput, UpdatePaymentInput } from "../schemas/member.schema.js";
 import { PLAN_FEES, currentPeriod, feeFor, todayISO } from "./planFees.service.js";
 import { logActivity } from "./activity.service.js";
 
@@ -16,6 +17,7 @@ const toClientMember = (doc: any) => ({
   joined: doc.joined,
   plan: doc.plan,
   paymentMethod: doc.paymentMethod,
+  biometricId: doc.biometricId ?? null,
   payments: doc.payments.map((p: any) => ({
     period: p.period,
     amount: p.amount,
@@ -96,6 +98,23 @@ export async function updatePayment(memberId: string, period: string, patch: Upd
     : `marked ${updated.status}`;
   await logActivity("payment.updated", `${member.name}'s ${period} payment ${detail}`, actorId);
 
+  return toClientMember(member);
+}
+
+/** Links (or with null, unlinks) the member to the user number their finger is enrolled under on the device. */
+export async function setBiometricId(memberId: string, input: UpdateBiometricIdInput) {
+  const member = isValidObjectId(memberId) ? await Member.findById(memberId) : null;
+  if (!member) throw ApiError.notFound("Member not found");
+
+  if (input.biometricId !== null) {
+    const holder = await Member.findOne({ biometricId: input.biometricId, _id: { $ne: member._id } });
+    if (holder) throw ApiError.conflict(`Biometric ID ${input.biometricId} is already linked to ${holder.name}.`);
+    member.biometricId = input.biometricId;
+  } else {
+    member.biometricId = undefined;
+  }
+
+  await member.save();
   return toClientMember(member);
 }
 

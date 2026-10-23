@@ -20,3 +20,14 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
     next(ApiError.unauthorized("Invalid or expired token"));
   }
 }
+
+/** Run after requireAuth. Restricts a route to the given user roles. */
+export function requireRole(...roles: string[]) {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    if (!roles.includes((req as AuthenticatedRequest).userRole)) {
+      next(ApiError.forbidden("You don't have permission to do this"));
+      return;
+    }
+    next();
+  };
+}

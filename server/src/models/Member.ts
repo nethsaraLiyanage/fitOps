@@ -24,9 +24,18 @@ const memberSchema = new Schema(
     plan: { type: String, required: true },
     paymentMethod: { type: String, enum: ["Monthly", "Annual"], required: true },
     payments: { type: [paymentSchema], default: [] },
+    /**
+     * The user number this member is enrolled under on the fingerprint device.
+     * Fingerprint templates themselves stay on the device and are never stored here.
+     */
+    biometricId: { type: String },
   },
   { timestamps: true },
 );
+
+// Partial rather than sparse: a sparse index still indexes explicit nulls, so two
+// unenrolled members would collide.
+memberSchema.index({ biometricId: 1 }, { unique: true, partialFilterExpression: { biometricId: { $type: "string" } } });
 
 export type MemberDoc = InferSchemaType<typeof memberSchema>;
 export const Member = model("Member", memberSchema);

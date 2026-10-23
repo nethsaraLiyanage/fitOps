@@ -8,6 +8,7 @@
     "build": "tsc -p .",
     "start": "node dist/server.js",
     "seed": "tsx src/seed/seed.ts",
+    "scanner": "tsx src/scripts/simulate-scanner.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

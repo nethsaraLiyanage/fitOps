@@ -5,6 +5,9 @@ const attendanceRecordSchema = new Schema(
     memberId: { type: Schema.Types.ObjectId, ref: "Member", required: true },
     checkIn: { type: Date, required: true },
     checkOut: { type: Date, default: null },
+    source: { type: String, enum: ["manual", "biometric"], required: true, default: "manual" },
+    /** The device that opened the record; null for a manual check-in. */
+    deviceId: { type: Schema.Types.ObjectId, ref: "Device", default: null },
   },
   { timestamps: true },
 );

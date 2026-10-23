@@ -81,6 +81,7 @@ describe("hardening", () => {
     const mutations: [method: "post" | "patch", path: string][] = [
       ["post", "/api/members"],
       ["patch", "/api/members/000000000000000000000000/payments/2026-09"],
+      ["patch", "/api/members/000000000000000000000000/biometric"],
       ["post", "/api/classes"],
       ["patch", "/api/classes/sessions/000000000000000000000000/complete"],
       ["post", "/api/equipment"],
@@ -93,6 +94,11 @@ describe("hardening", () => {
       ["patch", "/api/settings/gym"],
       ["patch", "/api/settings/account"],
       ["patch", "/api/settings/account/password"],
+      ["post", "/api/devices"],
+      ["patch", "/api/devices/000000000000000000000000"],
+      ["post", "/api/devices/000000000000000000000000/rotate-key"],
+      ["post", "/api/biometric/punches"],
+      ["post", "/api/biometric/heartbeat"],
     ];
 
     for (const [method, path] of mutations) {
@@ -117,6 +123,9 @@ describe("hardening", () => {
       "/api/reports/export/members.csv",
       "/api/settings/gym",
       "/api/activity",
+      "/api/devices",
+      "/api/devices/unmatched-punches",
+      "/api/biometric/roster",
     ];
 
     for (const path of reads) {
