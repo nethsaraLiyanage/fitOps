@@ -6,10 +6,14 @@
  */
 export const GYM_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
-export function startOfToday(): Date {
-  const date = new Date();
+export function startOfDay(at: Date): Date {
+  const date = new Date(at);
   date.setHours(0, 0, 0, 0);
   return date;
+}
+
+export function startOfToday(): Date {
+  return startOfDay(new Date());
 }
 
 export function startOfTomorrow(): Date {

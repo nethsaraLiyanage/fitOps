@@ -8,3 +8,5 @@ export * from "./InventoryItem.js";
 export * from "./AttendanceRecord.js";
 export * from "./GymProfile.js";
 export * from "./ActivityLog.js";
+export * from "./Device.js";
+export * from "./DevicePunch.js";

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { biometricIdSchema } from "./device.schema.js";
 
 export const createMemberSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Max 100 characters"),
@@ -26,3 +27,10 @@ export const updatePaymentSchema = z
   .refine((data) => Object.keys(data).length > 0, { message: "At least one field is required" });
 
 export type UpdatePaymentInput = z.infer<typeof updatePaymentSchema>;
+
+/** null un-enrols the member, freeing the ID for someone else. */
+export const updateBiometricIdSchema = z.object({
+  biometricId: biometricIdSchema.nullable(),
+});
+
+export type UpdateBiometricIdInput = z.infer<typeof updateBiometricIdSchema>;

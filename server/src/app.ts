@@ -11,6 +11,7 @@ import { activityRouter } from "./routes/activity.routes.js";
 import { attendanceRouter } from "./routes/attendance.routes.js";
 import { authRouter } from "./routes/auth.routes.js";
 import { classesRouter } from "./routes/classes.routes.js";
+import { biometricRouter, devicesRouter } from "./routes/devices.routes.js";
 import { equipmentRouter } from "./routes/equipment.routes.js";
 import { healthRouter } from "./routes/health.routes.js";
 import { inventoryRouter } from "./routes/inventory.routes.js";
@@ -75,6 +76,8 @@ export function createApp() {
   app.use("/api/reports", reportsRouter);
   app.use("/api/settings", settingsRouter);
   app.use("/api/activity", activityRouter);
+  app.use("/api/devices", devicesRouter);
+  app.use("/api/biometric", biometricRouter);
 
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);
