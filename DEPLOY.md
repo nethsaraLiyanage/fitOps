@@ -73,6 +73,11 @@ let you sign in with GitHub.
    | `JWT_SECRET` | a random string, **at least 16 characters** |
    | `JWT_EXPIRES_IN` | `8h` |
    | `NODE_ENV` | `production` |
+   | `GYM_TIMEZONE` | the gym's zone, e.g. `Asia/Colombo` |
+
+   `GYM_TIMEZONE` matters: Vercel runs in UTC and won't let `TZ` be set, so
+   without it "today" rolls over at the wrong hour and fingerprint punches —
+   which carry no timezone — are read as UTC and rejected as being in the future.
 
 5. **Deploy**, and note the resulting domain.
 6. Check `https://<that-domain>/api/health` — it should return

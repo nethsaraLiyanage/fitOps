@@ -11,7 +11,7 @@ async function main() {
   const server = app.listen(env.PORT, () => {
     console.log(`FitOps API listening on http://localhost:${env.PORT}`);
     // Attendance "today" and every date-bucketed report derive from this — if it is
-    // not the gym's own zone (a container without TZ set), those views shift by a day.
+    // not the gym's own zone (TZ and GYM_TIMEZONE both unset), those views shift by a day.
     console.log(`Gym timezone: ${GYM_TIMEZONE}`);
   });
 

@@ -22,6 +22,17 @@ function envProblems(): string[] {
     problems.push("JWT_SECRET must be at least 16 characters");
   }
 
+  // Checked here as well as in src/utils/time.ts, which throws on import — that
+  // would otherwise surface as DB_UNAVAILABLE, naming the wrong cause.
+  const zone = process.env.GYM_TIMEZONE?.trim();
+  if (zone) {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: zone });
+    } catch {
+      problems.push(`GYM_TIMEZONE "${zone}" is not a valid IANA timezone, e.g. Asia/Colombo`);
+    }
+  }
+
   return problems;
 }
 
