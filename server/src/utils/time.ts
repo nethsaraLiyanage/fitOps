@@ -1,8 +1,31 @@
+export function isValidTimeZone(zone: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: zone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * GYM_TIMEZONE pins the process to the gym's zone where TZ can't be set — Vercel
+ * runs functions in UTC and reserves TZ. Node re-reads TZ on assignment, so every
+ * Date and Intl call after this follows it; it lives here so it runs before
+ * GYM_TIMEZONE below is resolved and before any request does date bucketing.
+ */
+const configuredZone = process.env.GYM_TIMEZONE?.trim();
+if (configuredZone) {
+  if (!isValidTimeZone(configuredZone)) {
+    throw new Error(`GYM_TIMEZONE "${configuredZone}" is not a valid IANA timezone, e.g. Asia/Colombo`);
+  }
+  process.env.TZ = configuredZone;
+}
+
 /**
  * The gym's timezone — the server is assumed to run in it. Every date-bucketing
  * aggregate (attendance "today", the peak-hour heatmap, the report trends) derives
  * its boundaries from this one value, so no two views can disagree about which day
- * a record belongs to. In a container this means TZ must be set to the gym's zone.
+ * a record belongs to. In a container this means TZ (or GYM_TIMEZONE) must be set.
  */
 export const GYM_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
